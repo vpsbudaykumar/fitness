@@ -1,23 +1,42 @@
-// Server-side Supabase client — for use in API routes / server components.
-// Never import this into a client component; keep it off the mobile bundle.
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 export function createClient() {
   const cookieStore = cookies();
+
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
       cookies: {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
+
         set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options });
+          try {
+            cookieStore.set({
+              name,
+              value,
+              ...options,
+            });
+          } catch {
+            // Server Components cannot always modify cookies.
+            // Middleware handles session cookie refresh.
+          }
         },
+
         remove(name: string, options: CookieOptions) {
-          cookieStore.set({ name, value: "", ...options });
+          try {
+            cookieStore.set({
+              name,
+              value: "",
+              ...options,
+            });
+          } catch {
+            // Server Components cannot always modify cookies.
+            // Middleware handles session cookie refresh.
+          }
         },
       },
     }
