@@ -1,0 +1,9 @@
+export type Goal = "build_muscle" | "lose_fat" | "improve_strength" | "improve_endurance" | "general_fitness" | "mobility";
+export type Experience = "beginner" | "intermediate" | "advanced";
+export type Pattern = "squat" | "hinge" | "horizontal_push" | "horizontal_pull" | "vertical_push" | "vertical_pull" | "lunge" | "carry" | "core" | "mobility";
+export type Exercise = { id:string; name:string; primary_muscle:string; equipment:string[]; body_parts_loaded:string[]; difficulty:Experience; movement_pattern:Pattern; is_compound:boolean; estimated_minutes:number; instructions:string };
+export type Contraindication = { body_part:string; severity:"avoid_entirely"|"manage_around" };
+export type WorkoutInput = { goal:Goal; experience:Experience; equipment:string[]; workout_location:"gym"|"home"|"outdoor"; days_per_week:number; session_duration_minutes:number; contraindications:Contraindication[] };
+export type PlannedExercise = { exercise:Exercise; substitutions:Exercise[]; sets:number; rep_min:number; rep_max:number; rest_seconds:number; order_index:number; estimated_minutes:number };
+export type PlannedDay = { day_number:number; focus:string; exercises:PlannedExercise[]; estimated_duration_minutes:number };
+export type WorkoutPlan = { generator_version:string; days:PlannedDay[] };

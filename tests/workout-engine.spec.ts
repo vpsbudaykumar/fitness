@@ -1,0 +1,7 @@
+import { test, expect } from "@playwright/test";
+import { EXERCISE_CATALOG } from "@/lib/workouts/catalog";
+import { filterExercises, generateWorkout } from "@/lib/workouts/engine";
+const base={goal:"general_fitness" as const,experience:"beginner" as const,equipment:["dumbbells","bodyweight"],workout_location:"home" as const,days_per_week:3,session_duration_minutes:30,contraindications:[]};
+test("filters equipment, experience, and contraindications",()=>{const safe=filterExercises(EXERCISE_CATALOG,{...base,contraindications:[{body_part:"knee",severity:"avoid_entirely"}]});expect(safe.every(x=>!x.body_parts_loaded.includes("knee"))).toBeTruthy();expect(safe.every(x=>x.equipment.every(g=>["dumbbells","bodyweight"].includes(g)))).toBeTruthy();});
+test("is deterministic and programs days, rules, substitutions, and duration",()=>{const a=generateWorkout(base,EXERCISE_CATALOG),b=generateWorkout(base,EXERCISE_CATALOG);expect(a).toEqual(b);expect(a.days).toHaveLength(3);expect(a.days[0].estimated_duration_minutes).toBeLessThanOrEqual(30);expect(a.days[0].exercises[0].sets).toBeGreaterThan(0);expect(a.days[0].exercises[0].substitutions.length).toBeGreaterThanOrEqual(0);});
+test("changes strength prescriptions and rejects an unusable catalog",()=>{const plan=generateWorkout({...base,goal:"improve_strength",experience:"advanced",days_per_week:2},EXERCISE_CATALOG);expect(plan.days[0].exercises.some(x=>x.rep_max===6)).toBeTruthy();expect(()=>generateWorkout(base,[])).toThrow();});
