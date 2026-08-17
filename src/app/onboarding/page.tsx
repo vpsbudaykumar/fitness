@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { ParqAnswers } from "@/lib/types";
@@ -24,10 +24,23 @@ type Contra = { body_part: string; severity: "avoid_entirely" | "manage_around";
 
 export default function OnboardingPage() {
   const router = useRouter(); const [step, setStep] = useState(0); const [error, setError] = useState<string | null>(null); const [saving, setSaving] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [profile, setProfile] = useState({ name: "", age: "", height: "", weight: "", sex: "", units: "metric" });
   const [goal, setGoal] = useState(""); const [experience, setExperience] = useState(""); const [equipment, setEquipment] = useState<string[]>([]); const [location, setLocation] = useState(""); const [days, setDays] = useState(""); const [duration, setDuration] = useState("");
   const [answers, setAnswers] = useState<Partial<ParqAnswers>>({}); const [ack, setAck] = useState(false); const [contra, setContra] = useState<Contra[]>([]);
   const flagged = Object.values(answers).some(Boolean); const safetyComplete = Object.keys(answers).length === questions.length;
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.replace("/login?redirect=/onboarding");
+        return;
+      }
+      setCheckingAuth(false);
+    });
+  }, [router]);
+
   const advance = () => {
     setError(null);
     if (step === 0 && (!profile.name.trim() || !Number(profile.age) || !Number(profile.height) || !Number(profile.weight))) return setError("Enter your name, age, height, and weight.");
@@ -48,6 +61,11 @@ export default function OnboardingPage() {
     setSaving(false); if (rpcError) return setError(rpcError.message); router.replace("/home");
   }
   const optionButtons = (items: string[][], selected: string, choose: (value: string) => void) => <div className="grid gap-2">{items.map(([value, label]) => <button key={value} onClick={() => choose(value)} className={`rounded-xl border p-3 text-left ${selected === value ? "border-accent bg-accent/20" : "border-white/10 bg-white/5"}`}>{label}</button>)}</div>;
+
+  if (checkingAuth) {
+    return <main className="app-shell max-w-xl"><p className="text-sm text-white/60">Loading…</p></main>;
+  }
+
   return <main className="app-shell max-w-xl"><p className="eyebrow">Setup {step + 1} of 8</p><h1 className="page-title mt-1 mb-6">{["A few basics", "Your goal", "Experience", "Equipment", "Workout location", "Days per week", "Session duration", "Readiness check"][step]}</h1>
     <div className="flex gap-1 mb-8">{Array.from({ length: 8 }, (_, i) => <div key={i} className={`h-1 flex-1 rounded ${i <= step ? "bg-accent" : "bg-white/10"}`} />)}</div>
     {step === 0 && <div className="space-y-3"><label className="block text-sm">Name<input maxLength={80} value={profile.name} onChange={(e) => setProfile({...profile,name:e.target.value})} className="mt-1 input" /></label><div className="grid grid-cols-2 gap-3"><label className="text-sm">Age<input type="number" min="13" max="120" value={profile.age} onChange={(e) => setProfile({...profile,age:e.target.value})} className="mt-1 input" /></label><label className="text-sm">Sex (optional)<input maxLength={40} value={profile.sex} onChange={(e) => setProfile({...profile,sex:e.target.value})} className="mt-1 input" /></label></div><div className="grid grid-cols-2 gap-3"><label className="text-sm">Height ({profile.units === "metric" ? "cm" : "in"})<input type="number" value={profile.height} onChange={(e) => setProfile({...profile,height:e.target.value})} className="mt-1 input" /></label><label className="text-sm">Weight ({profile.units === "metric" ? "kg" : "lb"})<input type="number" value={profile.weight} onChange={(e) => setProfile({...profile,weight:e.target.value})} className="mt-1 input" /></label></div><label className="text-sm">Units<select value={profile.units} onChange={(e) => setProfile({...profile,units:e.target.value})} className="mt-1 input"><option value="metric">Metric</option><option value="imperial">Imperial</option></select></label></div>}
