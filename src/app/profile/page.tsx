@@ -14,29 +14,32 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  const [{ data: profile }, { data: preferences }, { data: contraindications }] =
-    await Promise.all([
-      supabase
-        .from("profiles")
-        .select(
-          "name, age, height_cm, weight_kg, sex, experience_level, units"
-        )
-        .eq("id", user.id)
-        .maybeSingle(),
+  const [
+    { data: profile },
+    { data: preferences },
+    { data: contraindications },
+  ] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select(
+        "name, age, height_cm, weight_kg, sex, experience_level, units"
+      )
+      .eq("id", user.id)
+      .maybeSingle(),
 
-      supabase
-        .from("training_preferences")
-        .select(
-          "goal, equipment, workout_location, days_per_week, session_duration_minutes"
-        )
-        .eq("user_id", user.id)
-        .maybeSingle(),
+    supabase
+      .from("training_preferences")
+      .select(
+        "goal, equipment, workout_location, days_per_week, session_duration_minutes"
+      )
+      .eq("user_id", user.id)
+      .maybeSingle(),
 
-      supabase
-        .from("contraindications")
-        .select("body_part, severity")
-        .eq("user_id", user.id),
-    ]);
+    supabase
+      .from("contraindications")
+      .select("body_part, severity")
+      .eq("user_id", user.id),
+  ]);
 
   const formatValue = (value: unknown) => {
     if (
@@ -76,6 +79,8 @@ export default async function ProfilePage() {
             Back home
           </Link>
         </div>
+
+        {/* PERSONAL */}
 
         <section className="mt-8">
           <p className="eyebrow">
@@ -155,6 +160,8 @@ export default async function ProfilePage() {
           </div>
         </section>
 
+        {/* TRAINING */}
+
         <section className="mt-8">
           <p className="eyebrow">
             Training
@@ -217,7 +224,7 @@ export default async function ProfilePage() {
                 preferences.equipment.length > 0 ? (
                   <div className="mt-2 flex flex-wrap gap-2">
                     {preferences.equipment.map(
-                      (equipment) => (
+                      (equipment: string) => (
                         <span
                           key={equipment}
                           className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium capitalize text-white/70"
@@ -239,6 +246,8 @@ export default async function ProfilePage() {
             </div>
           </div>
         </section>
+
+        {/* SAFETY */}
 
         <section className="mt-8">
           <p className="eyebrow">
@@ -298,6 +307,8 @@ export default async function ProfilePage() {
             )}
           </div>
         </section>
+
+        {/* ACCOUNT */}
 
         <section className="mt-8">
           <p className="eyebrow">
