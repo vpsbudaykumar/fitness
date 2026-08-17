@@ -31,11 +31,29 @@ type ProgressStats = {
   streak: number;
   consistency: number;
   minutes: number;
-  volume: number;
 };
 
+function localDateKey(value: string) {
+  const date = new Date(value);
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function getDateDaysAgo(daysAgo: number) {
+  const date = new Date();
+
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() - daysAgo);
+
+  return localDateKey(date.toISOString());
+}
+
 function getTrainingStreak(sessions: Session[]) {
-  const dates = [
+  const completedDates = [
     ...new Set(
       sessions
         .filter(
@@ -44,49 +62,44 @@ function getTrainingStreak(sessions: Session[]) {
             session.completed_at
         )
         .map((session) =>
-          new Date(session.completed_at as string)
-            .toISOString()
-            .slice(0, 10)
+          localDateKey(session.completed_at as string)
         )
     ),
   ].sort((a, b) => (a < b ? 1 : -1));
 
-  if (dates.length === 0) {
+  if (completedDates.length === 0) {
     return 0;
   }
 
-  const today = new Date();
+  const today = localDateKey(new Date().toISOString());
 
-  today.setHours(0, 0, 0, 0);
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
 
-  const todayString = today.toISOString().slice(0, 10);
-
-  const yesterday = new Date(today);
-
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  const yesterdayString = yesterday
-    .toISOString()
-    .slice(0, 10);
+  const yesterday = localDateKey(
+    yesterdayDate.toISOString()
+  );
 
   if (
-    dates[0] !== todayString &&
-    dates[0] !== yesterdayString
+    completedDates[0] !== today &&
+    completedDates[0] !== yesterday
   ) {
     return 0;
   }
 
   let streak = 1;
 
-  for (let i = 1; i < dates.length; i++) {
-    const current = new Date(dates[i - 1]);
-    const previous = new Date(dates[i]);
+  for (let i = 1; i < completedDates.length; i++) {
+    const current = new Date(completedDates[i - 1]);
+    const previous = new Date(completedDates[i]);
 
     const difference =
-      (current.getTime() - previous.getTime()) /
-      (1000 * 60 * 60 * 24);
+      Math.round(
+        (current.getTime() - previous.getTime()) /
+          (1000 * 60 * 60 * 24)
+      );
 
-    if (Math.round(difference) === 1) {
+    if (difference === 1) {
       streak++;
     } else {
       break;
@@ -97,29 +110,64 @@ function getTrainingStreak(sessions: Session[]) {
 }
 
 function getConsistency(sessions: Session[]) {
-  const now = new Date();
-
-  const start = new Date(now);
-
-  start.setDate(start.getDate() - 29);
-  start.setHours(0, 0, 0, 0);
-
-  const completedDays = new Set(
+  const completedDates = new Set(
     sessions
       .filter(
         (session) =>
           session.status === "completed" &&
-          session.completed_at &&
-          new Date(session.completed_at) >= start
+          session.completed_at
       )
       .map((session) =>
-        new Date(session.completed_at as string)
-          .toISOString()
-          .slice(0, 10)
+        localDateKey(session.completed_at as string)
       )
   );
 
-  return Math.round((completedDays.size / 30) * 100);
+  let completedDays = 0;
+
+  for (let i = 0; i < 30; i++) {
+    const dateKey = getDateDaysAgo(i);
+
+    if (completedDates.has(dateKey)) {
+      completedDays++;
+    }
+  }
+
+  return Math.round((completedDays / 30) * 100);
+}
+
+function calculateDuration(
+  session: Session,
+  estimatedDuration: number
+) {
+  if (!session.completed_at) {
+    return estimatedDuration;
+  }
+
+  const started = new Date(
+    session.started_at
+  ).getTime();
+
+  const completed = new Date(
+    session.completed_at
+  ).getTime();
+
+  const actualMinutes = Math.round(
+    (completed - started) / 60000
+  );
+
+  /*
+   * A workout should not normally take several hours.
+   * If a session was left open accidentally, use the
+   * workout's planned duration instead.
+   */
+  if (
+    actualMinutes <= 0 ||
+    actualMinutes > 180
+  ) {
+    return estimatedDuration;
+  }
+
+  return actualMinutes;
 }
 
 export default function ProgressPage() {
@@ -128,16 +176,14 @@ export default function ProgressPage() {
     streak: 0,
     consistency: 0,
     minutes: 0,
-    volume: 0,
   });
 
-  const [recent, setRecent] = useState<RecentWorkout[]>(
-    []
-  );
-
-  const [weeklyActivity, setWeeklyActivity] = useState<
-    boolean[]
+  const [recent, setRecent] = useState<
+    RecentWorkout[]
   >([]);
+
+  const [weeklyActivity, setWeeklyActivity] =
+    useState<boolean[]>([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -166,8 +212,8 @@ export default function ProgressPage() {
         ascending: false,
       });
 
-    const completedSessions = (sessions ??
-      []) as Session[];
+    const completedSessions =
+      (sessions ?? []) as Session[];
 
     const dayIds = [
       ...new Set(
@@ -191,7 +237,10 @@ export default function ProgressPage() {
     }
 
     const dayMap = new Map(
-      workoutDays.map((day) => [day.id, day])
+      workoutDays.map((day) => [
+        day.id,
+        day,
+      ])
     );
 
     const recentWorkouts: RecentWorkout[] =
@@ -202,55 +251,38 @@ export default function ProgressPage() {
             session.workout_day_id
           );
 
-          const minutes =
-            session.completed_at
-              ? Math.max(
-                  0,
-                  Math.round(
-                    (new Date(
-                      session.completed_at
-                    ).getTime() -
-                      new Date(
-                        session.started_at
-                      ).getTime()) /
-                      60000
-                  )
-                )
-              : day?.estimated_duration_minutes ?? 0;
+          const duration = calculateDuration(
+            session,
+            day?.estimated_duration_minutes ?? 45
+          );
 
           return {
             id: session.id,
             focus: day?.focus ?? "Workout",
-            duration: minutes,
+            duration,
             completedAt:
               session.completed_at ??
               session.started_at,
           };
         });
 
-    const totalMinutes = completedSessions.reduce(
-      (total, session) => {
-        if (!session.completed_at) {
-          return total;
-        }
+    const totalMinutes =
+      completedSessions.reduce(
+        (total, session) => {
+          const day = dayMap.get(
+            session.workout_day_id
+          );
 
-        const minutes = Math.max(
-          0,
-          Math.round(
-            (new Date(
-              session.completed_at
-            ).getTime() -
-              new Date(
-                session.started_at
-              ).getTime()) /
-              60000
-          )
-        );
-
-        return total + minutes;
-      },
-      0
-    );
+          return (
+            total +
+            calculateDuration(
+              session,
+              day?.estimated_duration_minutes ?? 45
+            )
+          );
+        },
+        0
+      );
 
     const streak =
       getTrainingStreak(completedSessions);
@@ -258,39 +290,40 @@ export default function ProgressPage() {
     const consistency =
       getConsistency(completedSessions);
 
-    const today = new Date();
+    /*
+     * Build the last 7 local calendar days.
+     */
+    const activity: boolean[] = [];
 
-    today.setHours(0, 0, 0, 0);
+    for (let daysAgo = 6; daysAgo >= 0; daysAgo--) {
+      const targetDate = new Date();
 
-    const activity = Array.from(
-      { length: 7 },
-      (_, index) => {
-        const date = new Date(today);
+      targetDate.setHours(0, 0, 0, 0);
+      targetDate.setDate(
+        targetDate.getDate() - daysAgo
+      );
 
-        date.setDate(
-          today.getDate() - (6 - index)
+      const targetKey =
+        localDateKey(
+          targetDate.toISOString()
         );
 
-        const dateString = date
-          .toISOString()
-          .slice(0, 10);
+      const completed = completedSessions.some(
+        (session) =>
+          session.completed_at &&
+          localDateKey(
+            session.completed_at
+          ) === targetKey
+      );
 
-        return completedSessions.some(
-          (session) =>
-            session.completed_at &&
-            new Date(session.completed_at)
-              .toISOString()
-              .slice(0, 10) === dateString
-        );
-      }
-    );
+      activity.push(completed);
+    }
 
     setStats({
       workouts: completedSessions.length,
       streak,
       consistency,
       minutes: totalMinutes,
-      volume: 0,
     });
 
     setRecent(recentWorkouts);
@@ -316,15 +349,17 @@ export default function ProgressPage() {
   return (
     <AppShell>
       <div className="mx-auto max-w-5xl">
-        <p className="eyebrow">Your journey</p>
+        <p className="eyebrow">
+          Your journey
+        </p>
 
         <h1 className="page-title mt-1">
           Progress
         </h1>
 
         <p className="mt-3 max-w-xl text-sm leading-6 text-white/60">
-          See how consistently you are training and how
-          much work you have completed.
+          See how consistently you are training and
+          how much work you have completed.
         </p>
 
         {loading ? (
@@ -392,7 +427,11 @@ export default function ProgressPage() {
                 </div>
 
                 <div className="metric text-sm text-white/50">
-                  {weeklyActivity.filter(Boolean).length}/7
+                  {
+                    weeklyActivity.filter(Boolean)
+                      .length
+                  }
+                  /7
                 </div>
               </div>
 
@@ -400,7 +439,7 @@ export default function ProgressPage() {
                 {weeklyActivity.map(
                   (completed, index) => (
                     <div
-                      key={weekLabels[index]}
+                      key={`${weekLabels[index]}-${index}`}
                       className="text-center"
                     >
                       <p className="text-[10px] text-white/40">
@@ -443,9 +482,7 @@ export default function ProgressPage() {
                 </p>
 
                 <p className="mt-3 font-[Space_Grotesk] text-xl font-bold">
-                  {stats.workouts === 0
-                    ? "Start your first workout"
-                    : "Build your next session"}
+                  Build your next session
                 </p>
 
                 <p className="mt-2 text-sm leading-6 text-white/50">
