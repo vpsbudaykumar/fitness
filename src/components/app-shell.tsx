@@ -58,6 +58,11 @@ export function AppShell({
 }) {
   const pathname = usePathname();
 
+  const profileActive = isActive(
+    pathname,
+    "/profile"
+  );
+
   return (
     <div className="app-shell">
       <header className="app-nav">
@@ -71,60 +76,58 @@ export function AppShell({
           <span>COACH</span>
         </Link>
 
-        {/* Desktop navigation */}
-        <nav
-          aria-label="Primary navigation"
-          className="nav-links hidden sm:flex"
-        >
-          {links.map(({ href, label }) => {
-            const active = isActive(
-              pathname,
-              href
-            );
+        <div className="flex items-center gap-2">
+          <nav
+            aria-label="Primary navigation"
+            className="nav-links hidden sm:flex"
+          >
+            {links.map(({ href, label }) => {
+              const active = isActive(
+                pathname,
+                href
+              );
 
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`nav-link ${
-                  active ? "active" : ""
-                }`}
-              >
-                {label}
-              </Link>
-            );
-          })}
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`nav-link ${
+                    active ? "active" : ""
+                  }`}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+          </nav>
 
-          {/* Profile */}
           <Link
             href="/profile"
             aria-label="Profile"
-            className={`nav-link inline-flex items-center gap-2 ${
-              isActive(pathname, "/profile")
-                ? "active"
-                : ""
+            title="Profile"
+            className={`flex h-10 w-10 items-center justify-center rounded-xl border transition ${
+              profileActive
+                ? "border-[#08A6A6]/25 bg-[#08A6A6]/10 text-[#078B8B]"
+                : "border-[#E7ECEA] bg-white text-[#66727F] shadow-sm hover:border-[#08A6A6]/30 hover:bg-[#F1F6F5] hover:text-[#078B8B]"
             }`}
           >
             <User
-              size={17}
-              strokeWidth={1.7}
+              size={19}
+              strokeWidth={1.8}
             />
-            <span>Profile</span>
           </Link>
-        </nav>
+        </div>
       </header>
 
-      {/* Page content */}
       <main className="min-h-[calc(100vh-76px)]">
         {children}
       </main>
 
-      {/* Mobile navigation */}
       <nav
         aria-label="Mobile primary navigation"
-        className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[#14171F]/95 px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl sm:hidden"
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-[#E7ECEA] bg-white/95 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_30px_rgba(23,33,43,0.06)] backdrop-blur-xl sm:hidden"
       >
-        <div className="mx-auto grid max-w-md grid-cols-5">
+        <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
           {links.map(
             ({ href, label, Icon }) => {
               const active = isActive(
@@ -141,25 +144,25 @@ export function AppShell({
                   }
                   className={`group flex min-h-[58px] flex-col items-center justify-center rounded-xl px-1 transition ${
                     active
-                      ? "text-white"
-                      : "text-[#565C6C]"
+                      ? "bg-[#08A6A6]/10 text-[#078B8B]"
+                      : "text-[#8A959F] hover:bg-[#F1F6F5] hover:text-[#17212B]"
                   }`}
                 >
                   <Icon
                     size={20}
-                    strokeWidth={1.7}
+                    strokeWidth={1.8}
                     className={
                       active
-                        ? "text-[#3D5AFE]"
-                        : "text-[#8B90A0] group-hover:text-white"
+                        ? "text-[#08A6A6]"
+                        : "text-[#8A959F] group-hover:text-[#17212B]"
                     }
                   />
 
                   <span
-                    className={`mt-1 text-[10px] font-medium transition ${
+                    className={`mt-1 text-[10px] font-semibold transition ${
                       active
-                        ? "text-[#3D5AFE]"
-                        : "text-[#565C6C] group-hover:text-[#8B90A0]"
+                        ? "text-[#078B8B]"
+                        : "text-[#8A959F]"
                     }`}
                   >
                     {label}

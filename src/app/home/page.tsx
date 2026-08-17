@@ -4,6 +4,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { createClient } from "@/lib/supabase/client";
+import {
+  ArrowRight,
+  Dumbbell,
+  Sparkles,
+  Timer,
+} from "lucide-react";
 
 type Workout = {
   id: string;
@@ -35,10 +41,6 @@ export default function HomePage() {
         return;
       }
 
-      /* ---------------------------------------------
-         PROFILE
-      --------------------------------------------- */
-
       const { data: profile } = await s
         .from("profiles")
         .select("name")
@@ -47,15 +49,13 @@ export default function HomePage() {
 
       setName(profile?.name ?? null);
 
-      /* ---------------------------------------------
-         LATEST WORKOUT PLAN
-      --------------------------------------------- */
-
       const { data: plan } = await s
         .from("workout_plans")
         .select("id")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
+        .order("created_at", {
+          ascending: false,
+        })
         .limit(1)
         .maybeSingle();
 
@@ -66,10 +66,6 @@ export default function HomePage() {
         setLoading(false);
         return;
       }
-
-      /* ---------------------------------------------
-         FIRST WORKOUT DAY
-      --------------------------------------------- */
 
       const { data: day } = await s
         .from("workout_days")
@@ -86,10 +82,6 @@ export default function HomePage() {
         setLoading(false);
         return;
       }
-
-      /* ---------------------------------------------
-         EXERCISE COUNT
-      --------------------------------------------- */
 
       const { count } = await s
         .from("workout_exercises")
@@ -113,10 +105,6 @@ export default function HomePage() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  /* ---------------------------------------------
-     GENERATE WORKOUT
-  --------------------------------------------- */
 
   async function generate() {
     setGenerating(true);
@@ -157,201 +145,294 @@ export default function HomePage() {
     }
   }
 
-  /* ---------------------------------------------
-     UI
-  --------------------------------------------- */
-
   return (
     <AppShell>
-      <main className="pb-28">
-
-        {/* =========================================
+      <main className="pb-10">
+        {/* =================================================
             GREETING
-        ========================================= */}
+        ================================================= */}
 
         <section className="home-greeting">
-          <p className="eyebrow">
-            Your training space
-          </p>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="eyebrow">
+                Your training space
+              </p>
 
-          <h1>
-            Good morning
-            <span>
-              {name ?? "there"}
-            </span>
-          </h1>
-        </section>
+              <h1>
+                Good morning
+                <span>
+                  {name ?? "there"}{" "}
+                  <span
+                    aria-hidden="true"
+                    className="inline-block"
+                  >
+                    👋
+                  </span>
+                </span>
+              </h1>
 
-        {/* =========================================
-            TODAY'S WORKOUT
-        ========================================= */}
-
-        {loading ? (
-          <section className="today-card animate-pulse">
-            <p className="eyebrow">
-              Today&apos;s session
-            </p>
-
-            <div className="mt-4 h-8 w-40 rounded-lg bg-white/10" />
-
-            <div className="mt-4 h-4 w-48 rounded bg-white/10" />
-
-            <div className="mt-6 h-12 w-full rounded-xl bg-white/10" />
-          </section>
-        ) : workout ? (
-          <section className="today-card">
-
-            <p className="eyebrow">
-              Today&apos;s session
-            </p>
-
-            <h2 className="session-title">
-              {workout.focus}
-            </h2>
-
-            <div className="session-meta">
-              <span>
-                {workout.estimated_duration_minutes} min
-              </span>
-
-              <span>•</span>
-
-              <span>
-                {workout.exerciseCount} exercises
-              </span>
+              <p className="mt-4 max-w-xl text-sm leading-6 text-[#66727F]">
+                Ready to build a stronger,
+                healthier you today?
+              </p>
             </div>
 
             <Link
-              href={`/workout/${workout.id}/overview`}
-              className="btn-primary mt-6 w-full"
+              href="/profile"
+              aria-label="View profile"
+              className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#E7ECEA] bg-white text-xl shadow-sm transition hover:border-[#08A6A6]/30 hover:shadow-md sm:flex"
             >
-              View workout
+              👤
             </Link>
-
-          </section>
-        ) : (
-          <section className="card">
-
-            <p className="eyebrow">
-              Training plan
-            </p>
-
-            <h2 className="mt-2 font-[Space_Grotesk] text-xl font-bold">
-              {hasPlan
-                ? "Workout plan ready"
-                : "No workout plan yet"}
-            </h2>
-
-            <p className="mt-2 text-sm leading-6 text-white/60">
-              {hasPlan
-                ? "Your plan does not have an available workout day yet."
-                : "Create a plan based on your profile, goals, equipment, and safety setup."}
-            </p>
-
-            {!hasPlan && (
-              <>
-                <button
-                  onClick={generate}
-                  disabled={generating}
-                  className="btn-primary mt-6 w-full"
-                >
-                  {generating
-                    ? "Generating workout..."
-                    : "Generate My Workout"}
-                </button>
-
-                {error && (
-                  <p
-                    role="alert"
-                    className="tag-stop mt-4"
-                  >
-                    {error}
-                  </p>
-                )}
-              </>
-            )}
-
-          </section>
-        )}
-
-        {/* =========================================
-            QUICK STATS
-        ========================================= */}
-
-        {workout && (
-          <section className="stats-grid">
-
-            <div className="stat-card">
-              <div className="stat-value">
-                {workout.estimated_duration_minutes}
-              </div>
-
-              <div className="stat-label">
-                Minutes
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-value">
-                {workout.exerciseCount}
-              </div>
-
-              <div className="stat-label">
-                Exercises
-              </div>
-            </div>
-
-          </section>
-        )}
-
-        {/* =========================================
-            COACH
-        ========================================= */}
-
-        <Link
-          href="/coach"
-          className="coach-card"
-        >
-          <div>
-
-            <div className="coach-label">
-              Coach
-            </div>
-
-            <div className="coach-title">
-              Need to adjust today?
-              Ask the coach
-            </div>
-
           </div>
-
-          <div className="coach-arrow">
-            →
-          </div>
-        </Link>
-
-        {/* =========================================
-            FUTURE FEATURES
-        ========================================= */}
-
-        <section className="locked-card">
-
-          <div>
-            <div className="locked-title">
-              Progress tracking
-            </div>
-
-            <div className="locked-subtitle">
-              Your training history and progress will appear here.
-            </div>
-          </div>
-
-          <span className="tag-ai">
-            Coming soon
-          </span>
-
         </section>
 
+        {/* =================================================
+            MAIN GRID
+        ================================================= */}
+
+        <div className="grid gap-5 lg:grid-cols-[1.6fr_0.9fr]">
+          {/* =================================================
+              TODAY'S WORKOUT
+          ================================================= */}
+
+          {loading ? (
+            <section className="today-card animate-pulse">
+              <p className="eyebrow">
+                Today&apos;s session
+              </p>
+
+              <div className="mt-4 h-9 w-48 rounded-lg bg-[#DDE9E6]" />
+
+              <div className="mt-4 h-4 w-52 rounded bg-[#E6EEEC]" />
+
+              <div className="mt-7 h-12 w-full rounded-xl bg-[#DDE9E6]" />
+            </section>
+          ) : workout ? (
+            <section className="today-card relative overflow-hidden">
+              {/* Decorative shape */}
+
+              <div
+                aria-hidden="true"
+                className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#08A6A6]/10"
+              />
+
+              <div
+                aria-hidden="true"
+                className="absolute -bottom-20 right-16 h-36 w-36 rounded-full bg-[#7657F6]/10"
+              />
+
+              <div className="relative">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="eyebrow">
+                    Today&apos;s session
+                  </p>
+
+                  <span className="tag-safe">
+                    Ready
+                  </span>
+                </div>
+
+                <h2 className="session-title mt-4 text-3xl sm:text-4xl">
+                  {workout.focus}
+                </h2>
+
+                <p className="mt-3 max-w-md text-sm leading-6 text-[#66727F]">
+                  Your personalized session is
+                  ready. Focus on quality movement
+                  and consistent effort.
+                </p>
+
+                <div className="mt-6 grid grid-cols-2 gap-3 sm:max-w-sm">
+                  <div className="rounded-2xl border border-white/70 bg-white/70 p-4">
+                    <Timer
+                      size={19}
+                      strokeWidth={1.8}
+                      className="text-[#08A6A6]"
+                    />
+
+                    <div className="metric mt-3 text-xl font-bold">
+                      {workout.estimated_duration_minutes}
+                    </div>
+
+                    <div className="mt-1 text-xs text-[#66727F]">
+                      Minutes
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/70 bg-white/70 p-4">
+                    <Dumbbell
+                      size={19}
+                      strokeWidth={1.8}
+                      className="text-[#7657F6]"
+                    />
+
+                    <div className="metric mt-3 text-xl font-bold">
+                      {workout.exerciseCount}
+                    </div>
+
+                    <div className="mt-1 text-xs text-[#66727F]">
+                      Exercises
+                    </div>
+                  </div>
+                </div>
+
+                <Link
+                  href={`/workout/${workout.id}/overview`}
+                  className="btn-primary mt-6 w-full sm:w-auto"
+                >
+                  Start workout
+                  <ArrowRight
+                    size={18}
+                    className="ml-2"
+                  />
+                </Link>
+              </div>
+            </section>
+          ) : (
+            <section className="card">
+              <p className="eyebrow">
+                Training plan
+              </p>
+
+              <h2 className="mt-3 font-[Space_Grotesk] text-2xl font-bold">
+                {hasPlan
+                  ? "Workout plan ready"
+                  : "Create your training plan"}
+              </h2>
+
+              <p className="mt-3 max-w-xl text-sm leading-6 text-[#66727F]">
+                {hasPlan
+                  ? "Your plan does not have an available workout day yet."
+                  : "Create a personalized plan based on your profile, goals, equipment, schedule, and safety setup."}
+              </p>
+
+              {!hasPlan && (
+                <>
+                  <button
+                    onClick={generate}
+                    disabled={generating}
+                    className="btn-primary mt-6 w-full sm:w-auto"
+                  >
+                    {generating
+                      ? "Generating workout..."
+                      : "Generate my workout"}
+
+                    {!generating && (
+                      <ArrowRight
+                        size={18}
+                        className="ml-2"
+                      />
+                    )}
+                  </button>
+
+                  {error && (
+                    <p
+                      role="alert"
+                      className="tag-stop mt-4"
+                    >
+                      {error}
+                    </p>
+                  )}
+                </>
+              )}
+            </section>
+          )}
+
+          {/* =================================================
+              COACH CARD
+          ================================================= */}
+
+          <Link
+            href="/coach"
+            className="coach-card group flex-col items-start justify-between lg:min-h-full"
+          >
+            <div className="flex w-full items-start justify-between">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#7657F6]/10">
+                <Sparkles
+                  size={21}
+                  strokeWidth={1.8}
+                  className="text-[#7657F6]"
+                />
+              </div>
+
+              <ArrowRight
+                size={20}
+                className="coach-arrow transition group-hover:translate-x-1"
+              />
+            </div>
+
+            <div className="mt-8">
+              <div className="coach-label">
+                AI Coach
+              </div>
+
+              <div className="mt-2 font-[Space_Grotesk] text-xl font-bold text-[#17212B]">
+                Need to adjust
+                today&apos;s workout?
+              </div>
+
+              <p className="mt-3 text-sm leading-6 text-[#66727F]">
+                Ask for exercise alternatives,
+                training adjustments, or help
+                understanding your plan.
+              </p>
+            </div>
+
+            <div className="mt-7 text-sm font-semibold text-[#7657F6]">
+              Talk to your coach →
+            </div>
+          </Link>
+        </div>
+
+        {/* =================================================
+            QUICK STATS
+        ================================================= */}
+
+        {workout && (
+          <section className="mt-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
+              <div className="stat-card">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#08A6A6]/10">
+                    <Timer
+                      size={18}
+                      className="text-[#08A6A6]"
+                    />
+                  </div>
+                </div>
+
+                <div className="stat-value mt-4">
+                  {workout.estimated_duration_minutes}
+                </div>
+
+                <div className="stat-label">
+                  Session minutes
+                </div>
+              </div>
+
+              <div className="stat-card">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FF735C]/10">
+                    <Dumbbell
+                      size={18}
+                      className="text-[#FF735C]"
+                    />
+                  </div>
+                </div>
+
+                <div className="stat-value mt-4">
+                  {workout.exerciseCount}
+                </div>
+
+                <div className="stat-label">
+                  Exercises today
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
       </main>
     </AppShell>
   );
