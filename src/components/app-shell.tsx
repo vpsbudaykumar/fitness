@@ -9,6 +9,7 @@ import {
   ShoppingBag,
   ChartNoAxesCombined,
   MessageCircle,
+  User,
 } from "lucide-react";
 
 const links = [
@@ -44,7 +45,10 @@ function isActive(pathname: string, href: string) {
     return pathname === "/" || pathname === "/home";
   }
 
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return (
+    pathname === href ||
+    pathname.startsWith(`${href}/`)
+  );
 }
 
 export function AppShell({
@@ -67,12 +71,16 @@ export function AppShell({
           <span>COACH</span>
         </Link>
 
+        {/* Desktop navigation */}
         <nav
           aria-label="Primary navigation"
           className="nav-links hidden sm:flex"
         >
           {links.map(({ href, label }) => {
-            const active = isActive(pathname, href);
+            const active = isActive(
+              pathname,
+              href
+            );
 
             return (
               <Link
@@ -86,54 +94,80 @@ export function AppShell({
               </Link>
             );
           })}
+
+          {/* Profile */}
+          <Link
+            href="/profile"
+            aria-label="Profile"
+            className={`nav-link inline-flex items-center gap-2 ${
+              isActive(pathname, "/profile")
+                ? "active"
+                : ""
+            }`}
+          >
+            <User
+              size={17}
+              strokeWidth={1.7}
+            />
+            <span>Profile</span>
+          </Link>
         </nav>
       </header>
 
+      {/* Page content */}
       <main className="min-h-[calc(100vh-76px)]">
         {children}
       </main>
 
+      {/* Mobile navigation */}
       <nav
         aria-label="Mobile primary navigation"
         className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[#14171F]/95 px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl sm:hidden"
       >
         <div className="mx-auto grid max-w-md grid-cols-5">
-          {links.map(({ href, label, Icon }) => {
-            const active = isActive(pathname, href);
+          {links.map(
+            ({ href, label, Icon }) => {
+              const active = isActive(
+                pathname,
+                href
+              );
 
-            return (
-              <Link
-                key={href}
-                href={href}
-                aria-current={active ? "page" : undefined}
-                className={`group flex min-h-[58px] flex-col items-center justify-center rounded-xl px-1 transition ${
-                  active
-                    ? "text-white"
-                    : "text-[#565C6C]"
-                }`}
-              >
-                <Icon
-                  size={20}
-                  strokeWidth={1.7}
-                  className={
-                    active
-                      ? "text-[#3D5AFE]"
-                      : "text-[#8B90A0] group-hover:text-white"
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  aria-current={
+                    active ? "page" : undefined
                   }
-                />
-
-                <span
-                  className={`mt-1 text-[10px] font-medium transition ${
+                  className={`group flex min-h-[58px] flex-col items-center justify-center rounded-xl px-1 transition ${
                     active
-                      ? "text-[#3D5AFE]"
-                      : "text-[#565C6C] group-hover:text-[#8B90A0]"
+                      ? "text-white"
+                      : "text-[#565C6C]"
                   }`}
                 >
-                  {label}
-                </span>
-              </Link>
-            );
-          })}
+                  <Icon
+                    size={20}
+                    strokeWidth={1.7}
+                    className={
+                      active
+                        ? "text-[#3D5AFE]"
+                        : "text-[#8B90A0] group-hover:text-white"
+                    }
+                  />
+
+                  <span
+                    className={`mt-1 text-[10px] font-medium transition ${
+                      active
+                        ? "text-[#3D5AFE]"
+                        : "text-[#565C6C] group-hover:text-[#8B90A0]"
+                    }`}
+                  >
+                    {label}
+                  </span>
+                </Link>
+              );
+            }
+          )}
         </div>
       </nav>
     </div>
