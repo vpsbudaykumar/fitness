@@ -4,13 +4,15 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import {
   ArrowRight,
+  CalendarDays,
   Check,
   Clock3,
-  Flame,
-  Trophy,
-  TrendingUp,
   Dumbbell,
+  Flame,
+  Target,
+  Trophy,
 } from "lucide-react";
+
 import { AppShell } from "@/components/app-shell";
 import { createClient } from "@/lib/supabase/client";
 
@@ -172,8 +174,8 @@ export default function ProgressPage() {
           ascending: false,
         });
 
-      const completedSessions = (sessions ??
-        []) as Session[];
+      const completedSessions =
+        (sessions ?? []) as Session[];
 
       const dayIds = [
         ...new Set(
@@ -208,21 +210,20 @@ export default function ProgressPage() {
               session.workout_day_id
             );
 
-            const minutes =
-              session.completed_at
-                ? Math.max(
-                    0,
-                    Math.round(
-                      (new Date(
-                        session.completed_at
-                      ).getTime() -
-                        new Date(
-                          session.started_at
-                        ).getTime()) /
-                        60000
-                    )
+            const minutes = session.completed_at
+              ? Math.max(
+                  0,
+                  Math.round(
+                    (new Date(
+                      session.completed_at
+                    ).getTime() -
+                      new Date(
+                        session.started_at
+                      ).getTime()) /
+                      60000
                   )
-                : day?.estimated_duration_minutes ?? 0;
+                )
+              : day?.estimated_duration_minutes ?? 0;
 
             return {
               id: session.id,
@@ -326,12 +327,21 @@ export default function ProgressPage() {
   const activeDays =
     weeklyActivity.filter(Boolean).length;
 
+  const consistencyMessage =
+    stats.consistency === 0
+      ? "Your journey starts with one completed workout."
+      : stats.consistency < 25
+        ? "You're building the habit. Keep showing up."
+        : stats.consistency < 50
+          ? "You're building real momentum."
+          : stats.consistency < 75
+            ? "Strong consistency. Keep the momentum going."
+            : "Excellent consistency. You're showing up.";
+
   return (
     <AppShell>
-      <main className="pb-10">
-        {/* =============================================
-            HEADER
-        ============================================= */}
+      <main className="pb-12">
+        {/* HEADER */}
 
         <section className="home-greeting">
           <p className="eyebrow">
@@ -343,39 +353,32 @@ export default function ProgressPage() {
           </h1>
 
           <p className="mt-4 max-w-xl text-sm leading-6 text-[#66727F]">
-            See how consistently you are training and
-            how much work you have completed.
+            Your training history, consistency, and
+            momentum in one place.
           </p>
         </section>
 
         {loading ? (
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="h-36 animate-pulse rounded-2xl bg-white shadow-sm" />
-            <div className="h-36 animate-pulse rounded-2xl bg-white shadow-sm" />
-            <div className="h-36 animate-pulse rounded-2xl bg-white shadow-sm" />
-            <div className="h-36 animate-pulse rounded-2xl bg-white shadow-sm" />
+          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map(
+              (_, index) => (
+                <div
+                  key={index}
+                  className="h-36 animate-pulse rounded-2xl bg-white shadow-sm"
+                />
+              )
+            )}
           </div>
         ) : (
           <>
-            {/* =========================================
-                STAT CARDS
-            ========================================= */}
+            {/* KEY STATS */}
 
-            <section className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {/* Workouts */}
-
+            <section className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
               <div className="rounded-2xl border border-[#E7ECEA] bg-white p-5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#08A6A6]/10">
-                    <Dumbbell
-                      size={19}
-                      className="text-[#08A6A6]"
-                    />
-                  </span>
-
-                  <TrendingUp
-                    size={17}
-                    className="text-[#9AA5AF]"
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#08A6A6]/10">
+                  <Dumbbell
+                    size={19}
+                    className="text-[#08A6A6]"
                   />
                 </div>
 
@@ -388,22 +391,20 @@ export default function ProgressPage() {
                 </p>
               </div>
 
-              {/* Streak */}
-
               <div className="rounded-2xl border border-[#E7ECEA] bg-white p-5 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF735C]/10">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF735C]/10">
                     <Flame
                       size={19}
                       className="text-[#FF735C]"
                     />
-                  </span>
+                  </div>
 
-                  <span className="text-xs font-semibold text-[#FF735C]">
-                    {stats.streak > 0
-                      ? "Active"
-                      : "Start"}
-                  </span>
+                  {stats.streak > 0 && (
+                    <span className="text-xs font-semibold text-[#FF735C]">
+                      Active
+                    </span>
+                  )}
                 </div>
 
                 <p className="metric mt-5 text-3xl font-bold text-[#17212B]">
@@ -415,16 +416,14 @@ export default function ProgressPage() {
                 </p>
               </div>
 
-              {/* Consistency */}
-
               <div className="rounded-2xl border border-[#E7ECEA] bg-white p-5 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#7657F6]/10">
-                    <Trophy
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#7657F6]/10">
+                    <Target
                       size={19}
                       className="text-[#7657F6]"
                     />
-                  </span>
+                  </div>
 
                   <span className="text-xs font-semibold text-[#7657F6]">
                     30 days
@@ -440,20 +439,12 @@ export default function ProgressPage() {
                 </p>
               </div>
 
-              {/* Minutes */}
-
               <div className="rounded-2xl border border-[#E7ECEA] bg-white p-5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F1A74B]/10">
-                    <Clock3
-                      size={19}
-                      className="text-[#F1A74B]"
-                    />
-                  </span>
-
-                  <span className="text-xs font-semibold text-[#66727F]">
-                    Total
-                  </span>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F1A74B]/10">
+                  <Clock3
+                    size={19}
+                    className="text-[#F1A74B]"
+                  />
                 </div>
 
                 <p className="metric mt-5 text-3xl font-bold text-[#17212B]">
@@ -466,12 +457,10 @@ export default function ProgressPage() {
               </div>
             </section>
 
-            {/* =========================================
-                WEEKLY ACTIVITY
-            ========================================= */}
+            {/* WEEKLY ACTIVITY */}
 
             <section className="mt-5 rounded-2xl border border-[#E7ECEA] bg-white p-5 shadow-sm sm:p-6">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="eyebrow">
                     Weekly activity
@@ -504,7 +493,7 @@ export default function ProgressPage() {
                       </span>
 
                       <div
-                        className={`mt-2 grid h-10 w-10 place-items-center rounded-full border transition sm:h-12 sm:w-12 ${
+                        className={`mt-2 grid h-10 w-10 place-items-center rounded-2xl border transition sm:h-12 sm:w-12 ${
                           completed
                             ? "border-[#08A6A6] bg-[#08A6A6] text-white shadow-sm"
                             : "border-[#E1E7E4] bg-[#F8FAF9] text-[#B8C1BC]"
@@ -516,7 +505,7 @@ export default function ProgressPage() {
                             strokeWidth={2.5}
                           />
                         ) : (
-                          <span className="text-lg">
+                          <span className="text-sm">
                             ·
                           </span>
                         )}
@@ -525,73 +514,107 @@ export default function ProgressPage() {
                   );
                 })}
               </div>
+
+              <div className="mt-6 flex items-center gap-2 text-xs text-[#66727F]">
+                <CalendarDays size={15} />
+                <span>
+                  {activeDays === 0
+                    ? "No completed sessions this week yet."
+                    : `${activeDays} active training ${
+                        activeDays === 1
+                          ? "day"
+                          : "days"
+                      } this week.`}
+                </span>
+              </div>
             </section>
 
-            {/* =========================================
-                TRAINING SUMMARY
-            ========================================= */}
+            {/* FORM JOURNEY */}
 
-            <section className="mt-5 grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
-              <div className="relative overflow-hidden rounded-2xl border border-[#E7ECEA] bg-white p-6 shadow-sm">
-                <div
-                  aria-hidden="true"
-                  className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#08A6A6]/10"
-                />
+            <section className="mt-5 overflow-hidden rounded-[26px] border border-[#DCD5FF] bg-[#F8F6FF] p-6 sm:p-7">
+              <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
+                  <Trophy
+                    size={28}
+                    className="text-[#7657F6]"
+                  />
+                </div>
 
-                <div className="relative">
-                  <p className="eyebrow">
-                    Training time
+                <div className="flex-1">
+                  <p className="eyebrow text-[#7657F6]">
+                    FORM Journey
                   </p>
 
-                  <div className="mt-5 flex items-end gap-2">
-                    <span className="metric text-4xl font-bold text-[#17212B]">
-                      {stats.minutes}
-                    </span>
+                  <h2 className="mt-2 font-[Space_Grotesk] text-2xl font-bold text-[#17212B]">
+                    Your consistency
+                  </h2>
 
-                    <span className="mb-1 text-sm text-[#66727F]">
-                      minutes
-                    </span>
-                  </div>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-[#66727F]">
+                    {consistencyMessage}
+                  </p>
+                </div>
 
-                  <p className="mt-3 text-sm leading-6 text-[#66727F]">
-                    Total time spent completing
-                    workouts.
+                <div className="shrink-0 text-left sm:text-right">
+                  <p className="font-[Space_Grotesk] text-4xl font-bold text-[#7657F6]">
+                    {stats.consistency}%
                   </p>
 
-                  <div className="mt-6 h-2 overflow-hidden rounded-full bg-[#EDF2F0]">
-                    <div
-                      className="h-full rounded-full bg-[#08A6A6]"
-                      style={{
-                        width: `${Math.min(
-                          stats.minutes / 10,
-                          100
-                        )}%`,
-                      }}
-                    />
-                  </div>
+                  <p className="mt-1 text-xs text-[#7D7698]">
+                    last 30 days
+                  </p>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-[#E7ECEA] bg-[#F5F2FF] p-6">
-                <p className="eyebrow text-[#7657F6]">
-                  Keep going
-                </p>
+              <div className="mt-7">
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <span className="text-[#66727F]">
+                    Consistency
+                  </span>
 
-                <h2 className="mt-3 font-[Space_Grotesk] text-2xl font-bold text-[#17212B]">
-                  {stats.workouts === 0
-                    ? "Start your first workout"
-                    : "Build your next session"}
-                </h2>
+                  <span className="text-[#7657F6]">
+                    {stats.consistency} / 100
+                  </span>
+                </div>
 
-                <p className="mt-3 max-w-xl text-sm leading-6 text-[#66727F]">
-                  Consistency matters more than
-                  perfection. Keep showing up and
-                  your progress will continue to grow.
-                </p>
+                <div className="mt-2 h-3 overflow-hidden rounded-full bg-white">
+                  <div
+                    className="h-full rounded-full bg-[#7657F6] transition-all duration-500"
+                    style={{
+                      width: `${Math.min(
+                        Math.max(stats.consistency, 0),
+                        100
+                      )}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* NEXT ACTION */}
+
+            <section className="mt-5 rounded-2xl border border-[#E7ECEA] bg-white p-6 shadow-sm">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="eyebrow">
+                    Next step
+                  </p>
+
+                  <h2 className="mt-2 font-[Space_Grotesk] text-2xl font-bold text-[#17212B]">
+                    {stats.workouts === 0
+                      ? "Start your first workout"
+                      : "Build your next session"}
+                  </h2>
+
+                  <p className="mt-2 max-w-xl text-sm leading-6 text-[#66727F]">
+                    Consistency matters more than
+                    perfection. Keep showing up and
+                    let the data tell your story.
+                  </p>
+                </div>
 
                 <Link
                   href="/workout"
-                  className="btn-primary mt-6 w-full sm:w-auto"
+                  className="btn-primary flex shrink-0 items-center justify-center"
                 >
                   View workouts
                   <ArrowRight
@@ -602,9 +625,7 @@ export default function ProgressPage() {
               </div>
             </section>
 
-            {/* =========================================
-                HISTORY
-            ========================================= */}
+            {/* HISTORY */}
 
             <section className="mt-10">
               <div className="flex items-end justify-between gap-4">
@@ -626,10 +647,10 @@ export default function ProgressPage() {
               </div>
 
               {recent.length === 0 ? (
-                <div className="mt-5 rounded-2xl border border-dashed border-[#D7DFDC] bg-white p-6">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#08A6A6]/10">
+                <div className="mt-5 rounded-2xl border border-dashed border-[#D7DFDC] bg-white p-7">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#08A6A6]/10">
                     <Dumbbell
-                      size={20}
+                      size={21}
                       className="text-[#08A6A6]"
                     />
                   </div>
@@ -646,7 +667,7 @@ export default function ProgressPage() {
 
                   <Link
                     href="/workout"
-                    className="btn-primary mt-5 w-full sm:w-auto"
+                    className="btn-primary mt-5 flex w-fit items-center"
                   >
                     Start a workout
                     <ArrowRight
@@ -660,7 +681,7 @@ export default function ProgressPage() {
                   {recent.map((workout) => (
                     <div
                       key={workout.id}
-                      className="group rounded-2xl border border-[#E7ECEA] bg-white p-4 shadow-sm transition hover:border-[#08A6A6]/25 hover:shadow-md sm:p-5"
+                      className="rounded-2xl border border-[#E7ECEA] bg-white p-4 shadow-sm transition hover:border-[#08A6A6]/25 hover:shadow-md sm:p-5"
                     >
                       <div className="flex items-center gap-4">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F1F6F5]">

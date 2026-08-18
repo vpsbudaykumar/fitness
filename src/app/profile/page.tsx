@@ -13,6 +13,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
+
 import { AppShell } from "@/components/app-shell";
 import { createClient } from "@/lib/supabase/client";
 
@@ -64,6 +65,16 @@ const locations = [
   ["outdoor", "Outdoor"],
 ];
 
+function formatValue(value: string) {
+  if (!value) return "Not set";
+
+  return value
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) =>
+      letter.toUpperCase()
+    );
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const supabase = createClient();
@@ -114,7 +125,10 @@ export default function ProfilePage() {
 
       const [
         { data: profileData, error: profileError },
-        { data: preferenceData, error: preferenceError },
+        {
+          data: preferenceData,
+          error: preferenceError,
+        },
       ] = await Promise.all([
         supabase
           .from("profiles")
@@ -229,13 +243,21 @@ export default function ProfilePage() {
 
     const height = Number(profile.height_cm);
 
-    if (!height || height < 50 || height > 300) {
+    if (
+      !height ||
+      height < 50 ||
+      height > 300
+    ) {
       return "Enter a valid height in cm.";
     }
 
     const weight = Number(profile.weight_kg);
 
-    if (!weight || weight < 20 || weight > 500) {
+    if (
+      !weight ||
+      weight < 20 ||
+      weight > 500
+    ) {
       return "Enter a valid weight in kg.";
     }
 
@@ -267,7 +289,11 @@ export default function ProfilePage() {
       preferences.session_duration_minutes
     );
 
-    if (!duration || duration < 10 || duration > 180) {
+    if (
+      !duration ||
+      duration < 10 ||
+      duration > 180
+    ) {
       return "Session duration must be between 10 and 180 minutes.";
     }
 
@@ -316,22 +342,23 @@ export default function ProfilePage() {
         throw new Error(profileError.message);
       }
 
-      const { error: preferencesError } =
-        await supabase
-          .from("training_preferences")
-          .update({
-            goal: preferences.goal,
-            equipment: preferences.equipment,
-            workout_location:
-              preferences.workout_location,
-            days_per_week:
-              Number(preferences.days_per_week),
-            session_duration_minutes:
-              Number(
-                preferences.session_duration_minutes
-              ),
-          })
-          .eq("user_id", user.id);
+      const {
+        error: preferencesError,
+      } = await supabase
+        .from("training_preferences")
+        .update({
+          goal: preferences.goal,
+          equipment: preferences.equipment,
+          workout_location:
+            preferences.workout_location,
+          days_per_week: Number(
+            preferences.days_per_week
+          ),
+          session_duration_minutes: Number(
+            preferences.session_duration_minutes
+          ),
+        })
+        .eq("user_id", user.id);
 
       if (preferencesError) {
         throw new Error(
@@ -372,15 +399,16 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <AppShell>
-        <main className="pb-10">
+        <main className="pb-12">
           <div className="mx-auto max-w-4xl">
-            <div className="rounded-3xl border border-[#E7ECEA] bg-white p-6 shadow-sm">
-              <div className="animate-pulse">
-                <div className="h-4 w-20 rounded bg-[#E5ECE9]" />
-                <div className="mt-4 h-9 w-48 rounded-lg bg-[#E5ECE9]" />
-                <div className="mt-3 h-4 w-72 rounded bg-[#EDF2F0]" />
-                <div className="mt-8 h-40 rounded-2xl bg-[#F1F6F5]" />
-              </div>
+            <div className="animate-pulse">
+              <div className="h-4 w-24 rounded bg-[#E5ECE9]" />
+
+              <div className="mt-4 h-10 w-56 rounded-lg bg-[#E5ECE9]" />
+
+              <div className="mt-4 h-4 w-80 rounded bg-[#EDF2F0]" />
+
+              <div className="mt-8 h-44 rounded-3xl bg-[#E8EEEC]" />
             </div>
           </div>
         </main>
@@ -390,14 +418,12 @@ export default function ProfilePage() {
 
   return (
     <AppShell>
-      <main className="pb-10">
+      <main className="pb-12">
         <div className="mx-auto max-w-4xl">
-          {/* =================================================
-              HEADER
-          ================================================= */}
+          {/* HEADER */}
 
           <section className="home-greeting">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="eyebrow">
                   Account
@@ -408,8 +434,9 @@ export default function ProfilePage() {
                 </h1>
 
                 <p className="mt-4 max-w-xl text-sm leading-6 text-[#66727F]">
-                  Manage the information FORM//COACH
-                  uses to personalize your training.
+                  Manage the information
+                  FORM//COACH uses to personalize
+                  your training.
                 </p>
               </div>
 
@@ -425,12 +452,10 @@ export default function ProfilePage() {
             </div>
           </section>
 
-          {/* =================================================
-              STATUS
-          ================================================= */}
+          {/* STATUS */}
 
           {success && (
-            <div className="mt-6 flex items-center gap-3 rounded-2xl border border-[#08A6A6]/20 bg-[#08A6A6]/8 px-4 py-3 text-sm font-medium text-[#078B8B]">
+            <div className="mt-6 flex items-center gap-3 rounded-2xl border border-[#08A6A6]/20 bg-[#08A6A6]/10 px-4 py-3 text-sm font-medium text-[#078B8B]">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#08A6A6]/15">
                 <Check size={15} />
               </span>
@@ -442,39 +467,25 @@ export default function ProfilePage() {
           {error && (
             <div
               role="alert"
-              className="mt-6 rounded-2xl border border-[#FF735C]/20 bg-[#FF735C]/8 px-4 py-3 text-sm font-medium text-[#D9513D]"
+              className="mt-6 rounded-2xl border border-[#FF735C]/20 bg-[#FF735C]/10 px-4 py-3 text-sm font-medium text-[#D9513D]"
             >
               {error}
             </div>
           )}
 
-          {/* =================================================
-              EDIT MODE
-          ================================================= */}
+          {/* EDIT MODE */}
 
           {editing ? (
             <>
               {/* PERSONAL */}
 
               <section className="mt-8">
-                <div className="mb-3 flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#08A6A6]/10">
-                    <UserRound
-                      size={17}
-                      className="text-[#08A6A6]"
-                    />
-                  </span>
-
-                  <div>
-                    <p className="eyebrow">
-                      Personal
-                    </p>
-
-                    <h2 className="font-[Space_Grotesk] text-xl font-bold text-[#17212B]">
-                      About you
-                    </h2>
-                  </div>
-                </div>
+                <SectionHeading
+                  icon={<UserRound size={17} />}
+                  iconClass="bg-[#08A6A6]/10 text-[#08A6A6]"
+                  eyebrow="Personal"
+                  title="About you"
+                />
 
                 <div className="rounded-3xl border border-[#E7ECEA] bg-white p-5 shadow-sm sm:p-6">
                   <div className="grid gap-5 sm:grid-cols-2">
@@ -483,10 +494,10 @@ export default function ProfilePage() {
 
                       <input
                         value={profile.name}
-                        onChange={(e) =>
+                        onChange={(event) =>
                           setProfile({
                             ...profile,
-                            name: e.target.value,
+                            name: event.target.value,
                           })
                         }
                         className="input mt-2"
@@ -502,10 +513,10 @@ export default function ProfilePage() {
                         min="13"
                         max="120"
                         value={profile.age}
-                        onChange={(e) =>
+                        onChange={(event) =>
                           setProfile({
                             ...profile,
-                            age: e.target.value,
+                            age: event.target.value,
                           })
                         }
                         className="input mt-2"
@@ -521,11 +532,11 @@ export default function ProfilePage() {
                           min="50"
                           max="300"
                           value={profile.height_cm}
-                          onChange={(e) =>
+                          onChange={(event) =>
                             setProfile({
                               ...profile,
                               height_cm:
-                                e.target.value,
+                                event.target.value,
                             })
                           }
                           className="input mt-2 pr-14"
@@ -546,11 +557,11 @@ export default function ProfilePage() {
                           min="20"
                           max="500"
                           value={profile.weight_kg}
-                          onChange={(e) =>
+                          onChange={(event) =>
                             setProfile({
                               ...profile,
                               weight_kg:
-                                e.target.value,
+                                event.target.value,
                             })
                           }
                           className="input mt-2 pr-14"
@@ -567,10 +578,10 @@ export default function ProfilePage() {
 
                       <input
                         value={profile.sex}
-                        onChange={(e) =>
+                        onChange={(event) =>
                           setProfile({
                             ...profile,
-                            sex: e.target.value,
+                            sex: event.target.value,
                           })
                         }
                         className="input mt-2"
@@ -621,24 +632,13 @@ export default function ProfilePage() {
               {/* TRAINING */}
 
               <section className="mt-8">
-                <div className="mb-3 flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#7657F6]/10">
-                    <Dumbbell
-                      size={17}
-                      className="text-[#7657F6]"
-                    />
-                  </span>
-
-                  <div>
-                    <p className="eyebrow text-[#7657F6]">
-                      Training
-                    </p>
-
-                    <h2 className="font-[Space_Grotesk] text-xl font-bold text-[#17212B]">
-                      Your training setup
-                    </h2>
-                  </div>
-                </div>
+                <SectionHeading
+                  icon={<Dumbbell size={17} />}
+                  iconClass="bg-[#7657F6]/10 text-[#7657F6]"
+                  eyebrow="Training"
+                  eyebrowClass="text-[#7657F6]"
+                  title="Your training setup"
+                />
 
                 <div className="rounded-3xl border border-[#E7ECEA] bg-white p-5 shadow-sm sm:p-6">
                   <div className="space-y-7">
@@ -668,13 +668,11 @@ export default function ProfilePage() {
                                 }
                                 className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-medium transition ${
                                   active
-                                    ? "border-[#7657F6] bg-[#7657F6]/8 text-[#6446E8]"
+                                    ? "border-[#7657F6] bg-[#7657F6]/10 text-[#6446E8]"
                                     : "border-[#E2E8E5] bg-[#F8FAF9] text-[#66727F] hover:border-[#7657F6]/30"
                                 }`}
                               >
-                                <span>
-                                  {label}
-                                </span>
+                                <span>{label}</span>
 
                                 {active && (
                                   <Check
@@ -697,8 +695,8 @@ export default function ProfilePage() {
                       </p>
 
                       <p className="mt-1 text-xs text-[#9AA5AF]">
-                        Select everything you can train
-                        with.
+                        Select everything you can
+                        train with.
                       </p>
 
                       <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -714,7 +712,7 @@ export default function ProfilePage() {
                                 key={value}
                                 className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium transition ${
                                   active
-                                    ? "border-[#08A6A6] bg-[#08A6A6]/8 text-[#078B8B]"
+                                    ? "border-[#08A6A6] bg-[#08A6A6]/10 text-[#078B8B]"
                                     : "border-[#E2E8E5] bg-[#F8FAF9] text-[#66727F] hover:border-[#08A6A6]/30"
                                 }`}
                               >
@@ -729,9 +727,7 @@ export default function ProfilePage() {
                                   className="h-4 w-4 accent-[#08A6A6]"
                                 />
 
-                                <span>
-                                  {label}
-                                </span>
+                                <span>{label}</span>
 
                                 {active && (
                                   <Check
@@ -805,11 +801,11 @@ export default function ProfilePage() {
                           value={
                             preferences.days_per_week
                           }
-                          onChange={(e) =>
+                          onChange={(event) =>
                             setPreferences({
                               ...preferences,
                               days_per_week:
-                                e.target.value,
+                                event.target.value,
                             })
                           }
                           className="input mt-2"
@@ -826,11 +822,11 @@ export default function ProfilePage() {
                           value={
                             preferences.session_duration_minutes
                           }
-                          onChange={(e) =>
+                          onChange={(event) =>
                             setPreferences({
                               ...preferences,
                               session_duration_minutes:
-                                e.target.value,
+                                event.target.value,
                             })
                           }
                           className="input mt-2"
@@ -881,193 +877,129 @@ export default function ProfilePage() {
             </>
           ) : (
             <>
-              {/* =================================================
-                  PROFILE SUMMARY
-              ================================================= */}
+              {/* PERSONAL SUMMARY */}
 
               <section className="mt-8">
-                <div className="mb-3 flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#08A6A6]/10">
-                    <UserRound
-                      size={17}
-                      className="text-[#08A6A6]"
-                    />
-                  </span>
-
-                  <div>
-                    <p className="eyebrow">
-                      Personal
-                    </p>
-
-                    <h2 className="font-[Space_Grotesk] text-xl font-bold text-[#17212B]">
-                      About you
-                    </h2>
-                  </div>
-                </div>
+                <SectionHeading
+                  icon={<UserRound size={17} />}
+                  iconClass="bg-[#08A6A6]/10 text-[#08A6A6]"
+                  eyebrow="Personal"
+                  title="About you"
+                />
 
                 <div className="rounded-3xl border border-[#E7ECEA] bg-white p-5 shadow-sm sm:p-6">
-                  <div className="grid gap-0 sm:grid-cols-2">
-                    <div className="border-b border-[#EDF1EF] py-4 sm:pr-6">
-                      <p className="text-xs font-medium text-[#9AA5AF]">
-                        Name
-                      </p>
+                  <div className="grid gap-x-8 sm:grid-cols-2">
+                    <InfoRow
+                      label="Name"
+                      value={profile.name}
+                    />
 
-                      <p className="mt-1 font-semibold text-[#17212B]">
-                        {profile.name || "—"}
-                      </p>
-                    </div>
+                    <InfoRow
+                      label="Experience"
+                      value={formatValue(
+                        profile.experience_level
+                      )}
+                    />
 
-                    <div className="border-b border-[#EDF1EF] py-4 sm:pl-6">
-                      <p className="text-xs font-medium text-[#9AA5AF]">
-                        Experience
-                      </p>
-
-                      <p className="mt-1 font-semibold capitalize text-[#17212B]">
-                        {profile.experience_level ||
-                          "—"}
-                      </p>
-                    </div>
-
-                    <div className="border-b border-[#EDF1EF] py-4 sm:pr-6">
-                      <p className="text-xs font-medium text-[#9AA5AF]">
-                        Age
-                      </p>
-
-                      <p className="metric mt-1 text-sm font-semibold text-[#17212B]">
-                        {profile.age
+                    <InfoRow
+                      label="Age"
+                      value={
+                        profile.age
                           ? `${profile.age} years`
-                          : "—"}
-                      </p>
-                    </div>
+                          : ""
+                      }
+                    />
 
-                    <div className="border-b border-[#EDF1EF] py-4 sm:pl-6">
-                      <p className="text-xs font-medium text-[#9AA5AF]">
-                        Sex
-                      </p>
+                    <InfoRow
+                      label="Sex"
+                      value={formatValue(
+                        profile.sex
+                      )}
+                    />
 
-                      <p className="mt-1 font-semibold capitalize text-[#17212B]">
-                        {profile.sex || "—"}
-                      </p>
-                    </div>
-
-                    <div className="py-4 sm:pr-6">
-                      <p className="text-xs font-medium text-[#9AA5AF]">
-                        Height
-                      </p>
-
-                      <p className="metric mt-1 text-sm font-semibold text-[#17212B]">
-                        {profile.height_cm
+                    <InfoRow
+                      label="Height"
+                      value={
+                        profile.height_cm
                           ? `${profile.height_cm} cm`
-                          : "—"}
-                      </p>
-                    </div>
+                          : ""
+                      }
+                    />
 
-                    <div className="py-4 sm:pl-6">
-                      <p className="text-xs font-medium text-[#9AA5AF]">
-                        Weight
-                      </p>
-
-                      <p className="metric mt-1 text-sm font-semibold text-[#17212B]">
-                        {profile.weight_kg
+                    <InfoRow
+                      label="Weight"
+                      value={
+                        profile.weight_kg
                           ? `${profile.weight_kg} kg`
-                          : "—"}
-                      </p>
-                    </div>
+                          : ""
+                      }
+                      last
+                    />
                   </div>
                 </div>
               </section>
 
-              {/* =================================================
-                  TRAINING SUMMARY
-              ================================================= */}
+              {/* TRAINING SUMMARY */}
 
               <section className="mt-8">
-                <div className="mb-3 flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#7657F6]/10">
-                    <Sparkles
-                      size={17}
-                      className="text-[#7657F6]"
-                    />
-                  </span>
-
-                  <div>
-                    <p className="eyebrow text-[#7657F6]">
-                      Training
-                    </p>
-
-                    <h2 className="font-[Space_Grotesk] text-xl font-bold text-[#17212B]">
-                      Your setup
-                    </h2>
-                  </div>
-                </div>
+                <SectionHeading
+                  icon={<Sparkles size={17} />}
+                  iconClass="bg-[#7657F6]/10 text-[#7657F6]"
+                  eyebrow="Training"
+                  eyebrowClass="text-[#7657F6]"
+                  title="Your setup"
+                />
 
                 <div className="rounded-3xl border border-[#E7ECEA] bg-white p-5 shadow-sm sm:p-6">
-                  <div className="grid gap-0 sm:grid-cols-2">
-                    <div className="border-b border-[#EDF1EF] py-4 sm:pr-6">
-                      <p className="text-xs font-medium text-[#9AA5AF]">
-                        Goal
-                      </p>
+                  <div className="grid gap-x-8 sm:grid-cols-2">
+                    <InfoRow
+                      label="Goal"
+                      value={formatValue(
+                        preferences.goal
+                      )}
+                    />
 
-                      <p className="mt-1 font-semibold capitalize text-[#17212B]">
-                        {preferences.goal.replaceAll(
-                          "_",
-                          " "
-                        ) || "—"}
-                      </p>
-                    </div>
+                    <InfoRow
+                      label="Workout location"
+                      value={formatValue(
+                        preferences.workout_location
+                      )}
+                    />
 
-                    <div className="border-b border-[#EDF1EF] py-4 sm:pl-6">
-                      <p className="text-xs font-medium text-[#9AA5AF]">
-                        Workout location
-                      </p>
-
-                      <p className="mt-1 font-semibold capitalize text-[#17212B]">
-                        {preferences.workout_location ||
-                          "—"}
-                      </p>
-                    </div>
-
-                    <div className="border-b border-[#EDF1EF] py-4 sm:pr-6">
-                      <p className="text-xs font-medium text-[#9AA5AF]">
-                        Training schedule
-                      </p>
-
-                      <p className="metric mt-1 text-sm font-semibold text-[#17212B]">
-                        {preferences.days_per_week
+                    <InfoRow
+                      label="Training schedule"
+                      value={
+                        preferences.days_per_week
                           ? `${preferences.days_per_week} days / week`
-                          : "—"}
-                      </p>
-                    </div>
+                          : ""
+                      }
+                    />
 
-                    <div className="border-b border-[#EDF1EF] py-4 sm:pl-6">
-                      <p className="text-xs font-medium text-[#9AA5AF]">
-                        Session duration
-                      </p>
-
-                      <p className="metric mt-1 text-sm font-semibold text-[#17212B]">
-                        {preferences.session_duration_minutes
+                    <InfoRow
+                      label="Session duration"
+                      value={
+                        preferences.session_duration_minutes
                           ? `${preferences.session_duration_minutes} min`
-                          : "—"}
-                      </p>
-                    </div>
+                          : ""
+                      }
+                    />
 
-                    <div className="py-4 sm:col-span-2">
+                    <div className="border-b border-[#EDF1EF] py-4 sm:col-span-2">
                       <p className="text-xs font-medium text-[#9AA5AF]">
                         Equipment
                       </p>
 
-                      {preferences.equipment.length >
-                      0 ? (
+                      {preferences.equipment
+                        .length > 0 ? (
                         <div className="mt-3 flex flex-wrap gap-2">
                           {preferences.equipment.map(
-                            (equipment: string) => (
+                            (equipment) => (
                               <span
                                 key={equipment}
-                                className="rounded-full border border-[#08A6A6]/15 bg-[#08A6A6]/8 px-3 py-1.5 text-xs font-semibold capitalize text-[#078B8B]"
+                                className="rounded-full border border-[#08A6A6]/15 bg-[#08A6A6]/10 px-3 py-1.5 text-xs font-semibold text-[#078B8B]"
                               >
-                                {equipment.replaceAll(
-                                  "_",
-                                  " "
+                                {formatValue(
+                                  equipment
                                 )}
                               </span>
                             )
@@ -1075,7 +1007,7 @@ export default function ProfilePage() {
                         </div>
                       ) : (
                         <p className="mt-1 text-sm text-[#66727F]">
-                          —
+                          Not set
                         </p>
                       )}
                     </div>
@@ -1083,9 +1015,7 @@ export default function ProfilePage() {
                 </div>
               </section>
 
-              {/* =================================================
-                  PROFILE INSIGHT
-              ================================================= */}
+              {/* PERSONALIZATION */}
 
               <section className="relative mt-8 overflow-hidden rounded-3xl border border-[#7657F6]/10 bg-[#F5F2FF] p-5 sm:p-6">
                 <div
@@ -1112,16 +1042,15 @@ export default function ProfilePage() {
 
                     <p className="mt-2 text-sm leading-6 text-[#66727F]">
                       FORM//COACH uses your goals,
-                      equipment, schedule, and training
-                      experience to shape your workouts.
+                      equipment, schedule, and
+                      training experience to shape
+                      your workouts.
                     </p>
                   </div>
                 </div>
               </section>
 
-              {/* =================================================
-                  ACCOUNT
-              ================================================= */}
+              {/* ACCOUNT */}
 
               <section className="mt-8">
                 <div className="mb-3">
@@ -1171,9 +1100,7 @@ export default function ProfilePage() {
             </>
           )}
 
-          {/* =================================================
-              MOBILE BACK
-          ================================================= */}
+          {/* MOBILE BACK */}
 
           <div className="mt-8 flex justify-center sm:hidden">
             <Link
@@ -1194,5 +1121,69 @@ export default function ProfilePage() {
         </div>
       </main>
     </AppShell>
+  );
+}
+
+function SectionHeading({
+  icon,
+  iconClass,
+  eyebrow,
+  eyebrowClass = "",
+  title,
+}: {
+  icon: React.ReactNode;
+  iconClass: string;
+  eyebrow: string;
+  eyebrowClass?: string;
+  title: string;
+}) {
+  return (
+    <div className="mb-3 flex items-center gap-3">
+      <span
+        className={`flex h-9 w-9 items-center justify-center rounded-xl ${iconClass}`}
+      >
+        {icon}
+      </span>
+
+      <div>
+        <p
+          className={`eyebrow ${eyebrowClass}`}
+        >
+          {eyebrow}
+        </p>
+
+        <h2 className="font-[Space_Grotesk] text-xl font-bold text-[#17212B]">
+          {title}
+        </h2>
+      </div>
+    </div>
+  );
+}
+
+function InfoRow({
+  label,
+  value,
+  last = false,
+}: {
+  label: string;
+  value: string;
+  last?: boolean;
+}) {
+  return (
+    <div
+      className={`py-4 ${
+        !last
+          ? "border-b border-[#EDF1EF]"
+          : ""
+      }`}
+    >
+      <p className="text-xs font-medium text-[#9AA5AF]">
+        {label}
+      </p>
+
+      <p className="mt-1 font-semibold text-[#17212B]">
+        {value || "Not set"}
+      </p>
+    </div>
   );
 }
